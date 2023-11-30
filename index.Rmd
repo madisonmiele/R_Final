@@ -1,0 +1,59 @@
+---
+title: "Southern Stingrays Foraging Habitat"
+author: "Madison Miele"
+date: "2023-11-30"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+
+stingray <- read.csv("PitData.csv")
+View(stingray)
+```
+
+# Manipulation 
+## Change data to long and delete unnecessary columns
+
+```{r}
+stingraylong <- stingray %>% pivot_longer(cols = `HS`:`SF`:`HW`:`Sand`:`Other`, names_to = "Habitat", values_to = "Percent_Cover")
+View(stingraylong)
+
+stingraylonger <- stingraylong[,-2]
+View(stingraylonger)
+
+stinglong <- stingraylonger[, -c(8:10)]
+View(stinglong)
+```
+
+# Filter
+## Filter data to only look at HS cover
+
+```{r}
+sting <- stinglong %>% filter(Habitat == "HS")
+View(sting)
+
+stingray_summary <- sting %>% group_by(Type, Sample_Period) %>% summarise(MeanHS = mean(Percent_Cover), SDHS = sd(Percent_Cover), n = length(Percent_Cover))
+stingray_summary
+```
+
+# Visualize
+## Table of summarized data
+
+```{r}
+library(kableExtra)
+
+kable(stingray_summary) %>% 
+   kable_styling(bootstrap_options = "striped")
+```
+
+## Plot of summarized data
+
+```{r}
+stingray_plot <- ggplot(aes(x = Sample_Period, y = MeanHS, fill = Type), data = stingray_summary) + geom_col(position = position_dodge(0.9), width = 0.75) + geom_errorbar(aes(ymin = MeanHS, ymax = MeanHS + SDHS), position = position_dodge(0.9), width = 0.5) + ylab("Average Percent Cover of Halophila Stipulacea (+/- SEM)") + xlab("Sample Period")
+stingray_plot
+```
+
